@@ -12,7 +12,8 @@ namespace Ronalfy_Jimenez_P2_Ap1.Models
         [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "Solo se permiten letras")]
         public string? Nombre { get; set; }
         [Required(ErrorMessage = "Este campo obligatorio")]
-        public double Monto { get; set; }
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor a 0")]
+        public double MontoBase { get; set; }
 
     }
 }
