@@ -6,6 +6,6 @@ using System.Linq.Expressions;
 
 namespace Ronalfy_Jimenez_P2_Ap1.Services;
 
-public class ModeloService
+public class CiudadService(IDbContextFactory<Contexto> DbFactory)
 {
 }
