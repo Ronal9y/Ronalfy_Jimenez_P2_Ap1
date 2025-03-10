@@ -9,6 +9,8 @@ namespace Ronalfy_Jimenez_P2_Ap1.DAL
         public Contexto(DbContextOptions<Contexto> options) : base(options)
         {
         }
+
+        public DbSet<Ciudades> Ciudades { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
