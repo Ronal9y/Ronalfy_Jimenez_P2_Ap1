@@ -19,7 +19,7 @@ public class Program
         var ConStr = builder.Configuration.GetConnectionString("SqlConStr");
         builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
 
-        builder.Services.AddScoped<ModeloService>();
+        builder.Services.AddScoped<CiudadService>();
 
         builder.Services.AddBlazorBootstrap();
 
