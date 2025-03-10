@@ -84,7 +84,7 @@ public class CiudadService(IDbContextFactory<Contexto> DbFactory)
     public async Task<double> ObtenerTotalMontos()
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
-        return await contexto.Ciudades.SumAsync(m => m.Monto);
+        return await contexto.Ciudades.SumAsync((Expression<Func<Ciudades, double>>)(m => m.Monto));
     }
 
 }
