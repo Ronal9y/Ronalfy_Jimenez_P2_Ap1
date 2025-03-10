@@ -20,6 +20,7 @@ public class Program
         builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
 
         builder.Services.AddScoped<CiudadService>();
+        builder.Services.AddScoped<CursoService>();
 
         builder.Services.AddBlazorBootstrap();
 
