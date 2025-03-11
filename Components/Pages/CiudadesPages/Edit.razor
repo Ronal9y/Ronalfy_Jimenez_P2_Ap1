@@ -1,94 +1,129 @@
-﻿@page "/Ciudad/Delete"
-@page "/Ciudad/Delete/{CiudadId:int}"
+﻿@page "/Ciudad/Edit"
+@page "/Ciudad/Edit/{CiudadId:int}"
 @using Ronalfy_Jimenez_P2_Ap1.Services
 @inject CiudadService ciudadService
 @inject NavigationManager navigationManager
 @rendermode InteractiveServer
 
-<PageTitle>Eliminar Ciudad</PageTitle>
+<EditForm Model="Ciudades" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
 
-<div class="container">
-    <div class="card shadow-header">
-        <div class=" bg-primary text-white text-center py-2 rounded">
-            <h3><strong>Eliminar Ciudad</strong></h3>
+    <div class="card-header bg-primary text-center text-white py-2 rounded">
+        <h3 style="font-weight: bold;" class="font-weight-bold">Modificar Ciudad</h3>
+    </div>
+
+    <div class="card-body">
+
+        @*CiudadId*@
+        <div class="mb-3">
+            <label for="CiudadId" class="form-label">Id:</label>
+            <InputNumber @bind-Value="Ciudades.CiudadId" class="form-control" />
         </div>
 
-        <div class="card-header text-center">
-            <h3 class="text-danger">¿Est&aacute; seguro de eliminar esta ciudad?</h3>
+        @*Nombre*@
+        <div class="mb-3">
+            <label for="Nombre" class="form-label">Nombre:</label>
+            <InputText @bind-Value="Ciudades.Nombre" class="form-control" />
+            <ValidationMessage For="@(()=>Ciudades.Nombre)" />
         </div>
 
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card shadow-lg">
-                        <div card-header>
-                            <h3 class="text-center"><strong>Datos de la Ciudad</strong></h3>
-                        </div>
+        @*Monto*@
+        <div class="mb-3">
+            <label for="Monto" class="form-label">Monto:</label>
+            <InputNumber @bind-Value="Ciudades.MontoBase" class="form-control" min="0" />
+        </div>
 
-                        <div class="card-body">
-                            <div class="border-primary border-2 borde">
-                                <div card-body>
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <ul class="list-unstyled">
-                                                <li><strong>CiudadId:</strong>@Ciudades.CiudadId</li>
-                                                <li><strong>Nombre:</strong>@Ciudades.Nombre</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    </div>
 
-            <div class="card-footer text-center">
-                <button type="button" class="btn btn-outline-danger" @onclick="EliminarCiudad"><i class="bi bi-trash-fill"></i>Eliminar</button>
-                <button type="button" class="btn btn-outline-primary" @onclick="Volver"><i class="bi bi-box-arrow-left"></i>Volver</button>
-            </div>
+    <div class="card-footer d-flex justify-content-lg-center text-center">
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus-circle"></span>Nuevo</button>
+            <button type="button" class="btn btn-outline-success ml-2" @onclick="Guardar"><span class="bi bi-check-circle-fill"></span>Guardar</button>
+            <button type="button" class="btn btn-outline-danger" @onclick="Retroceder"><span class="bi bi-arrow-bar-left"></span>Retroceder</button>
 
         </div>
 
     </div>
-</div>
+
+</EditForm>
 
 @code {
-
     [Parameter]
     public int CiudadId { get; set; }
-
-    public Ciudades? Ciudades { get; set; } = new Ciudades();
-
+    public Ciudades Ciudades { get; set; } = new Ciudades();
     public bool existe = false;
 
     protected override async Task OnInitializedAsync()
     {
-
-        if (CiudadId != 0)
+        if (CiudadId > 0)
         {
-            Ciudades = await ciudadService.Buscar(CiudadId);
+            var encontrado = await ciudadService.Buscar(CiudadId);
+            if (encontrado != null)
+            {
+                Ciudades = encontrado;
+            }
         }
     }
 
-    public async Task EliminarCiudad()
+
+    public async Task Buscar()
     {
 
-        if (CiudadId == 0 || Ciudades == null)
+        existe = false;
+        var ciudadEncontrado = await ciudadService.Buscar(CiudadId);
+        if (ciudadEncontrado != null)
+        {
+            Ciudades = ciudadEncontrado;
+        }
+        else
+        {
+            Nuevo();
+        }
+    }
+
+    public async Task Nuevo()
+    {
+        Ciudades = new Ciudades();
+
+    }
+
+    public async Task<bool> Validar()
+    {
+        var listaCiudad = await ciudadService.Listar(m => m.Nombre.ToLower() == Ciudades.Nombre.ToLower()
+        && m.CiudadId != Ciudades.CiudadId);
+        existe = listaCiudad.Any();
+        return !existe;
+    }
+
+
+    public async Task Retroceder()
+    {
+        navigationManager.NavigateTo("/Ciudad/Index");
+    }
+
+    public async Task Guardar()
+    {
+
+        if (Ciudades.MontoBase < 0)
         {
             return;
         }
 
-        if (await ciudadService.Eliminar(CiudadId))
+
+        var existeCiudad = await ciudadService.Listar(m => m.Nombre.ToLower() == Ciudades.Nombre.ToLower()
+            && m.CiudadId != Ciudades.CiudadId);
+
+        if (existeCiudad.Any())
         {
-            Volver();
+            return;
         }
 
-    }
 
-    public async Task Volver()
-    {
-        navigationManager.NavigateTo("/Ciudad/Index");
+        var resultado = await ciudadService.Guardar(Ciudades);
+        if (resultado)
+        {
+            await Retroceder();
+        }
     }
 
 }
