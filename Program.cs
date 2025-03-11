@@ -21,6 +21,7 @@ public class Program
 
         builder.Services.AddScoped<CiudadService>();
         builder.Services.AddScoped<CursoService>();
+        builder.Services.AddScoped<CursosDetalleService>();
 
         builder.Services.AddBlazorBootstrap();
 

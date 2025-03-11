@@ -5,85 +5,70 @@ using System.Linq.Expressions;
 
 namespace Ronalfy_Jimenez_P2_Ap1.Services
 {
-    public class CursoService(IDbContextFactory<Contexto> DbFactory)
+    public class CursoService
     {
+        private readonly IDbContextFactory<Contexto> _dbFactory;
 
-        private async Task<bool> Insertar(Cursos cursos)
+        public CursoService(IDbContextFactory<Contexto> dbFactory)
         {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            contexto.Cursos.Add(cursos);
-
-            return await contexto.SaveChangesAsync() > 0;
-
+            _dbFactory = dbFactory;
         }
-        private async Task<bool> Modificar(Cursos cursos)
+        private async Task<bool> Insertar(Cursos curso)
         {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-
-            contexto.Update(cursos);
-
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
+            contexto.Cursos.Add(curso);
             return await contexto.SaveChangesAsync() > 0;
         }
+
+        private async Task<bool> Modificar(Cursos curso)
+        {
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
+            contexto.Cursos.Update(curso);
+            return await contexto.SaveChangesAsync() > 0;
+        }
+
         public async Task<bool> Eliminar(int id)
         {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
+            var curso = await contexto.Cursos.FindAsync(id);
+            if (curso == null) return false;
 
-            var EliminarCurso = await contexto.Cursos
-                .Where(t => t.CursosId == id).ExecuteDeleteAsync();
-
-            return EliminarCurso > 0;
+            contexto.Cursos.Remove(curso);
+            return await contexto.SaveChangesAsync() > 0;
         }
-        public async Task<bool> Existe(int cursosId)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
 
-            return await contexto.Cursos.AnyAsync(t => t.CursosId == cursosId);
+        public async Task<bool> Existe(int cursoId)
+        {
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
+            return await contexto.Cursos.AnyAsync(c => c.CursosId == cursoId);
         }
-        public async Task<bool> Guardar(Cursos cursos)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
 
-            if (!await Existe(cursos.CursosId))
-            {
-                return await Insertar(cursos);
-            }
+        public async Task<bool> Guardar(Cursos curso)
+        {
+            if (!await Existe(curso.CursosId))
+                return await Insertar(curso);
             else
-            {
-                return await Modificar(cursos);
-            }
+                return await Modificar(curso);
         }
-        public async Task<Cursos?> Buscar(int id = 0, string? asignatura = null)
+
+        public async Task<Cursos?> Buscar(int id)
         {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
             return await contexto.Cursos
-                .Where(t => t.CursosId == id || t.Asignatura == asignatura)
-                .FirstOrDefaultAsync();
+                .Include(c => c.CursosDetalle)
+                .ThenInclude(d => d.Ciudad)
+                .FirstOrDefaultAsync(c => c.CursosId == id);
         }
-        public async Task<bool> ExisteNombreCliente(string asignatura, int id)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            return await contexto.Cursos.AnyAsync(c =>
-                (c.Asignatura == asignatura) &&
-                c.CursosId != id
-            );
-        }
+
         public async Task<List<Cursos>> Listar(Expression<Func<Cursos, bool>> criterio)
         {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-
-            return await contexto.Cursos.AsNoTracking().Where(criterio).ToListAsync();
-
-        }
-        public async Task<List<Cursos>> ListarCiudades()
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            return await contexto.Cursos.AsNoTracking().ToListAsync();
-        }
-
-        public async Task<double> ObtenerTotalMontos()
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            return await contexto.Cursos.SumAsync((Expression<Func<Cursos, double>>)(m => m.Monto));
+            await using var contexto = await _dbFactory.CreateDbContextAsync();
+            return await contexto.Cursos
+                .Include(c => c.CursosDetalle)
+                .ThenInclude(d => d.Ciudad)
+                .AsNoTracking()
+                .Where(criterio)
+                .ToListAsync();
         }
 
     }
