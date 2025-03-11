@@ -16,7 +16,7 @@
         <div class="col-md-3">
             <label for="Filtro" class="form-label">Filtrar por:</label>
             <select class="form-select" @bind="filtro">
-                <option value="AporteID">CiudadId</option>
+                <option value="CiudadID">CiudadId</option>
                 <option value="Nombre">Nombre</option>
             </select>
         </div>
@@ -99,23 +99,35 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Listar = await ciudadService.Listar(s => true);
+        await CargarDatos();
     }
 
     public async Task Buscar()
     {
-        if (string.IsNullOrEmpty(valorFiltro))
+        var listaFiltrada = await ciudadService.Listar(p => true);
+
+        if (!string.IsNullOrEmpty(valorFiltro))
         {
-            Listar = await ciudadService.Listar(P => true);
+            if (filtro == "CiudadID" && int.TryParse(valorFiltro, out int ciudadId))
+            {
+                listaFiltrada = listaFiltrada.Where(m => m.CiudadId == ciudadId).ToList();
+            }
+            else if (filtro == "Nombre")
+            {
+                listaFiltrada = listaFiltrada
+                    .Where(m => m.Nombre.ToLower().Contains(valorFiltro.ToLower()))
+                    .ToList();
+            }
         }
-        else if (filtro == "ID" && int.TryParse(valorFiltro, out int ciudadId))
-        {
-            Listar = await ciudadService.Listar(s => s.CiudadId == ciudadId);
-        }
-        else if (filtro == "Nombre")
-        {
-            Listar = await ciudadService.Listar(s => s.Nombre.Contains(valorFiltro));
-        }
+
+        Listar = listaFiltrada;
+        TotalMontos = Listar.Sum(m => m.MontoBase);
+    }
+
+    private async Task CargarDatos()
+    {
+        Listar = await ciudadService.Listar(s => true);
+        TotalMontos = await ciudadService.ObtenerTotalMontos();
     }
 
 }
