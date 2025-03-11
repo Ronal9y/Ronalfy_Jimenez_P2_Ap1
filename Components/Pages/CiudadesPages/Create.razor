@@ -1,9 +1,121 @@
-﻿@page "/Modelo/Create"
+﻿@page "/Ciudad/Create"
+@page "/Ciudad/Create/{CiudadId:int}"
 @using Ronalfy_Jimenez_P2_Ap1.Services
-@inject CiudadService modeloService
+@inject CiudadService ciudadService
 @inject NavigationManager navigationManager
 @rendermode InteractiveServer
 
+<EditForm Model="Ciudades" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="card-header bg-primary text-center text-white py-2 rounded">
+        <h3 style="font-weight: bold;" class="font-weight-bold">Crear Ciudad</h3>
+    </div>
+
+    <div class="card-body">
+
+        @*CiudadId*@
+        <div class="mb-3">
+            <label for="CiudadId" class="form-label">Id:</label>
+            <InputNumber @bind-Value="Ciudades.CiudadId" class="form-control" />
+        </div>
+
+        @*Nombre*@
+        <div class="mb-3">
+            <label for="Nombre" class="form-label">Nombre:</label>
+            <InputText @bind-Value="Ciudades.Nombre" class="form-control" />
+            <ValidationMessage For="@(()=>Ciudades.Nombre)" />
+        </div>
+
+        @*Monto*@
+        <div class="mb-3">
+            <label for="Monto" class="form-label">Monto:</label>
+            <InputNumber @bind-Value="Ciudades.MontoBase" class="form-control" min="0" />
+        </div>
+
+    </div>
+
+    <div class="card-footer d-flex justify-content-lg-center text-center">
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus-circle"></span>Nuevo</button>
+            <button type="button" class="btn btn-outline-success ml-2" @onclick="Guardar"><span class="bi bi-check-circle-fill"></span>Guardar</button>
+            <button type="button" class="btn btn-outline-danger" @onclick="Retroceder"><span class="bi bi-arrow-bar-left"></span>Retroceder</button>
+
+        </div>
+
+    </div>
+
+</EditForm>
+
 @code {
+
+    [Parameter]
+    public int CiudadId { get; set; }
+    public Ciudades Ciudades { get; set; } = new Ciudades();
+    public bool existe = false;
+
+    public async Task Nuevo()
+    {
+
+        Ciudades = new Ciudades();
+        existe = false;
+
+    }
+
+    public async Task Buscar()
+    {
+        existe = false;
+        var encontrado = await ciudadService.Buscar(Ciudades.CiudadId);
+        if (encontrado != null)
+        {
+            Ciudades = encontrado;
+        }
+        else
+        {
+
+            Nuevo();
+
+        }
+    }
+
+    public async Task<bool> Validar()
+    {
+        var listaCiudad = await ciudadService.Listar(m => m.Nombre.ToLower() == Ciudades.Nombre.ToLower());
+        existe = listaCiudad.Any();
+        return !existe;
+    }
+
+
+    public async Task Guardar()
+    {
+        if (Ciudades.MontoBase < 0)
+        {
+            return;
+        }
+
+        if (!await Validar())
+        {
+            return;
+        }
+
+        var resultado = await ciudadService.Guardar(Ciudades);
+        if (resultado)
+        {
+            Nuevo();
+            Retroceder();
+        }
+    }
+
+
+    public async Task Retroceder()
+    {
+        navigationManager.NavigateTo("/Ciudad/Index");
+    }
+
+    public async Task Eliminar()
+    {
+        var eliminado = await ciudadService.Eliminar(Ciudades.CiudadId);
+        Nuevo();
+    }
 
 }
