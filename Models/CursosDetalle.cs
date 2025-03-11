@@ -5,34 +5,25 @@ namespace Ronalfy_Jimenez_P2_Ap1.Models
 {
     public class CursosDetalle
     {
-
         [Key]
         public int DetalleId { get; set; }
 
         [Required]
-        public int CursosId { get; set; }
+        public int CursosId { get; set; } // 👈 Clave foránea correcta
 
         [Required]
         public int CiudadId { get; set; }
 
         [Required]
-        public string NombreCiudad { get; set; } = string.Empty;
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor a 0")]
+        public double Monto { get; set; }
 
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El monto adicional debe ser mayor a 0")]
-        public double MontoAdicional { get; set; }
-
-        [NotMapped]
-        public double MontoTotal => MontoBaseCiudad + MontoAdicional;
-
-        [NotMapped]
-        public double MontoBaseCiudad { get; set; }
-
+        // Relación con la tabla Cursos
         [ForeignKey("CursosId")]
-        public virtual Cursos Cursos { get; set; }
+        public virtual Cursos? Curso { get; set; }  // 👈 Referencia a Cursos corregida
 
+        // Relación con la tabla Ciudades
         [ForeignKey("CiudadId")]
-        public virtual Ciudades Ciudades { get; set; }
-
+        public virtual Ciudades? Ciudad { get; set; }
     }
 }
