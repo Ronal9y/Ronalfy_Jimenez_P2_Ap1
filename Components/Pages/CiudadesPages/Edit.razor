@@ -1,1 +1,94 @@
-﻿
+﻿@page "/Ciudad/Delete"
+@page "/Ciudad/Delete/{CiudadId:int}"
+@using Ronalfy_Jimenez_P2_Ap1.Services
+@inject CiudadService ciudadService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Eliminar Ciudad</PageTitle>
+
+<div class="container">
+    <div class="card shadow-header">
+        <div class=" bg-primary text-white text-center py-2 rounded">
+            <h3><strong>Eliminar Ciudad</strong></h3>
+        </div>
+
+        <div class="card-header text-center">
+            <h3 class="text-danger">¿Est&aacute; seguro de eliminar esta ciudad?</h3>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-lg">
+                        <div card-header>
+                            <h3 class="text-center"><strong>Datos de la Ciudad</strong></h3>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="border-primary border-2 borde">
+                                <div card-body>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <ul class="list-unstyled">
+                                                <li><strong>CiudadId:</strong>@Ciudades.CiudadId</li>
+                                                <li><strong>Nombre:</strong>@Ciudades.Nombre</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer text-center">
+                <button type="button" class="btn btn-outline-danger" @onclick="EliminarCiudad"><i class="bi bi-trash-fill"></i>Eliminar</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="Volver"><i class="bi bi-box-arrow-left"></i>Volver</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int CiudadId { get; set; }
+
+    public Ciudades? Ciudades { get; set; } = new Ciudades();
+
+    public bool existe = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (CiudadId != 0)
+        {
+            Ciudades = await ciudadService.Buscar(CiudadId);
+        }
+    }
+
+    public async Task EliminarCiudad()
+    {
+
+        if (CiudadId == 0 || Ciudades == null)
+        {
+            return;
+        }
+
+        if (await ciudadService.Eliminar(CiudadId))
+        {
+            Volver();
+        }
+
+    }
+
+    public async Task Volver()
+    {
+        navigationManager.NavigateTo("/Ciudad/Index");
+    }
+
+}
