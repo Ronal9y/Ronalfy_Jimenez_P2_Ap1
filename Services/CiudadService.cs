@@ -40,25 +40,26 @@ public class CiudadService(IDbContextFactory<Contexto> DbFactory)
 
         return await contexto.Ciudades.AnyAsync(t => t.CiudadId == ciudadId);
     }
-    public async Task<bool> Guardar(Ciudades ciudades)
+    public async Task<bool> Guardar(Ciudades ciudad)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
 
-        if (!await Existe(ciudades.CiudadId))
+        if (ciudad.CiudadId == 0)
         {
-            return await Insertar(ciudades);
+            contexto.Ciudades.Add(ciudad);
         }
         else
         {
-            return await Modificar(ciudades);
+            contexto.Update(ciudad);
         }
+
+        return await contexto.SaveChangesAsync() > 0;
     }
-    public async Task<Ciudades?> Buscar(int id = 0, string? nombre = null)
+    public async Task<Ciudades?> Buscar(int ciudadId)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
         return await contexto.Ciudades
-            .Where(t => t.CiudadId == id || t.Nombre == nombre)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(c => c.CiudadId == ciudadId);
     }
     public async Task<bool> ExisteNombreCliente(string nombre, int id)
     {
