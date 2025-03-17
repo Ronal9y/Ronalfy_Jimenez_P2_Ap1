@@ -30,8 +30,24 @@ namespace Ronalfy_Jimenez_P2_Ap1.Services
         public async Task<bool> Eliminar(int id)
         {
             await using var contexto = await _dbFactory.CreateDbContextAsync();
-            var curso = await contexto.Cursos.FindAsync(id);
+
+            var curso = await contexto.Cursos
+                .Include(c => c.CursosDetalle)
+                .FirstOrDefaultAsync(c => c.CursosId == id);
+
             if (curso == null) return false;
+
+            foreach (var detalle in curso.CursosDetalle)
+            {
+                var ciudad = await contexto.Ciudades
+                    .FirstOrDefaultAsync(c => c.CiudadId == detalle.CiudadId);
+
+                if (ciudad != null)
+                {
+                    ciudad.MontoBase -= detalle.Monto;
+                    contexto.Update(ciudad);
+                }
+            }
 
             contexto.Cursos.Remove(curso);
             return await contexto.SaveChangesAsync() > 0;
@@ -64,8 +80,7 @@ namespace Ronalfy_Jimenez_P2_Ap1.Services
         {
             await using var contexto = await _dbFactory.CreateDbContextAsync();
             return await contexto.Cursos
-                .Include(c => c.CursosDetalle)
-                .ThenInclude(d => d.Ciudad)
+                .Include(c => c.CursosDetalle) // Incluir detalles
                 .AsNoTracking()
                 .Where(criterio)
                 .ToListAsync();
