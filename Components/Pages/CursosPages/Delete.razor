@@ -1,5 +1,94 @@
-﻿<h3>Delete</h3>
+﻿@page "/Curso/Delete"
+@page "/Curso/Delete/{CursosId:int}"
+@using Ronalfy_Jimenez_P2_Ap1.Services
+@inject CursoService cursoService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Eliminar Curso</PageTitle>
+
+<div class="container">
+    <div class="card shadow-header">
+        <div class=" bg-primary text-white text-center py-2 rounded">
+            <h3><strong>Eliminar Curso</strong></h3>
+        </div>
+
+        <div class="card-header text-center">
+            <h3 class="text-danger">¿Est&aacute; seguro de eliminar esta Curso?</h3>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-lg">
+                        <div card-header>
+                            <h3 class="text-center"><strong>Datos de la Curso</strong></h3>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="border-primary border-2 borde">
+                                <div card-body>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <ul class="list-unstyled">
+                                                <li><strong>Id:</strong>@Cursos.CursosId</li>
+                                                <li><strong>Asignatura:</strong>@Cursos.Asignatura</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer text-center">
+                <button type="button" class="btn btn-outline-danger" @onclick="EliminarCurso"><i class="bi bi-trash-fill"></i>Eliminar</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="Volver"><i class="bi bi-box-arrow-left"></i>Volver</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
 
 @code {
+
+    [Parameter]
+    public int CursosId { get; set; }
+
+    public Cursos? Cursos { get; set; } = new Cursos();
+
+    public bool existe = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (CursosId != 0)
+        {
+            Cursos = await cursoService.Buscar(CursosId);
+        }
+    }
+
+    public async Task EliminarCurso()
+    {
+
+        if (CursosId == 0 || Cursos == null)
+        {
+            return;
+        }
+
+        if (await cursoService.Eliminar(CursosId))
+        {
+            Volver();
+        }
+
+    }
+
+    public async Task Volver()
+    {
+        navigationManager.NavigateTo("/Curso/Index");
+    }
 
 }
