@@ -31,6 +31,7 @@ namespace Ronalfy_Jimenez_P2_Ap1.DAL
 
             );
 
+
       //      modelBuilder.Entity<Cursos>()
       //.HasMany(c => c.CursosDetalle)
       //.WithOne(d => d.Cursos)
