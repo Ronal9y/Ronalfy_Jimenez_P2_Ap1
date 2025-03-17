@@ -110,24 +110,27 @@
         Cursos.Fecha = DateTime.Now;
     }
 
-    private void AgregarDetalle()
+    private async Task AgregarDetalle()
     {
         if (CursosDetalles.CiudadId > 0 && CursosDetalles.Monto > 0)
         {
-            var ciudadSeleccionada = Ciudades.FirstOrDefault(c => c.CiudadId == CursosDetalles.CiudadId);
+            var ciudadSeleccionada = await ciudadService.Buscar(CursosDetalles.CiudadId);
 
             if (ciudadSeleccionada != null)
             {
-                double montoTotal = ciudadSeleccionada.MontoBase + CursosDetalles.Monto;
+                // Actualizar monto de la ciudad
+                ciudadSeleccionada.MontoBase += CursosDetalles.Monto;
+                await ciudadService.Guardar(ciudadSeleccionada);
 
+                // Agregar detalle con el monto original
                 Cursos.CursosDetalle.Add(new CursosDetalle
                     {
                         CiudadId = CursosDetalles.CiudadId,
-                        Monto = montoTotal
+                        Monto = CursosDetalles.Monto
                     });
 
+                // Actualizar monto total del curso
                 Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
-
                 CursosDetalles = new CursosDetalle();
                 DetalleMensaje = string.Empty;
             }
@@ -142,8 +145,16 @@
         }
     }
 
-    public void EliminarCurso(CursosDetalle detalle)
+    public async Task EliminarCurso(CursosDetalle detalle)
     {
+        var ciudad = await ciudadService.Buscar(detalle.CiudadId);
+        if (ciudad != null)
+        {
+            
+            ciudad.MontoBase -= detalle.Monto;
+            await ciudadService.Guardar(ciudad);
+        }
+
         Cursos.CursosDetalle.Remove(detalle);
         Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
     }
