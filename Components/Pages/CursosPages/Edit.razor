@@ -1,9 +1,7 @@
-﻿@page "/Curso/Edit"
-@page "/Ciudad/Edit/{CiudadId:int}"
+﻿@page "/Curso/Edit/{CursosId:int}"
 @using Ronalfy_Jimenez_P2_Ap1.Services
 @inject CursoService cursoService
 @inject CiudadService ciudadService
-@inject CursosDetalleService cursoDetalleService
 @inject NavigationManager navigationManager
 @rendermode InteractiveServer
 
@@ -11,13 +9,13 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="card-header bg-primary text-center text-white py-2 rounded">
-        <h3 style="font-weight: bold;" class="font-weight-bold">Modificar Encuesta</h3>
+        <h3 class="font-weight-bold">Modificar Encuesta</h3>
     </div>
 
     <div class="card-body">
         <div class="mb-3">
             <label for="CursosId" class="form-label">CursosId:</label>
-            <InputNumber @bind-Value="Cursos.CursosId" class="form-control" />
+            <InputNumber @bind-Value="Cursos.CursosId" class="form-control" disabled />
         </div>
 
         <div class="mb-3">
@@ -30,21 +28,15 @@
             <InputText class="form-control" @bind-Value="Cursos.Asignatura"></InputText>
             <ValidationMessage For="(() => Cursos.Asignatura)" />
         </div>
-
-        <div class="mb-3">
-            <label for="Monto" class="form-label"><strong>Monto</strong></label>
-            <InputNumber class="form-control" @bind-Value="Cursos.Monto"></InputNumber>
-            <ValidationMessage For="(() => Cursos.Monto)" />
-        </div>
     </div>
-    @* Detalles de los cursos *@
+
     <div class="border border-success p-3 mt-3">
         <h4>Detalles de Cursos</h4>
         @if (!string.IsNullOrEmpty(DetalleMensaje))
         {
-            <div class="alert alert-danger" role="alert">
+                <div class="alert alert-danger" role="alert">
                 @DetalleMensaje
-            </div>
+                </div>
         }
         <div class="row">
             <div class="col-auto input-group align-items-center">
@@ -52,7 +44,7 @@
                     <option disabled value="0">--- Seleccione una Ciudad ---</option>
                     @foreach (var ciudad in Ciudades)
                     {
-                        <option value="@ciudad.CiudadId">@ciudad.CiudadId -- @ciudad.Nombre</option>
+                            <option value="@ciudad.CiudadId">@ciudad.Nombre</option>
                     }
                 </InputSelect>
 
@@ -62,26 +54,31 @@
             </div>
         </div>
 
-        @* Tabla de detalle *@
         <div>
             <table class="table table-light">
                 <thead class="table-striped">
                     <tr class="text-center">
                         <th>Ciudad</th>
                         <th>Monto</th>
+                        <th>Modificar</th>
                         <th>Remover</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var detalle in Cursos.CursosDetalle)
                     {
-                        <tr class="text-center">
-                            <td>@detalle.CiudadId</td>
-                            <td>@detalle.Monto.ToString("C")</td>
-                            <td>
-                                <button type="button" @onclick="() => EliminarCurso(detalle)" class="btn btn-outline-danger bi bi-trash">Remover</button>
-                            </td>
-                        </tr>
+                            <tr class="text-center">
+                                <td>@Ciudades.FirstOrDefault(c => c.CiudadId == detalle.CiudadId)?.Nombre</td>
+                                <td>
+                                    <InputNumber class="form-control" @bind-Value="detalle.Monto" @onchange="() => ActualizarMonto()"></InputNumber>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-warning bi bi-pencil" @onclick="ActualizarMonto">Modificar</button>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-danger bi bi-trash" @onclick="() => EliminarCurso(detalle)">Remover</button>
+                                </td>
+                            </tr>
                     }
                 </tbody>
             </table>
@@ -99,17 +96,14 @@
 @code {
     [Parameter]
     public int CursosId { get; set; }
-    public Cursos Cursos { get; set; } = new Cursos();
+    public Cursos Cursos { get; set; } = new Cursos { CursosDetalle = new List<CursosDetalle>() };
     public CursosDetalle CursosDetalles { get; set; } = new CursosDetalle();
     public List<Ciudades> Ciudades { get; set; } = new List<Ciudades>();
     public string DetalleMensaje { get; set; } = string.Empty;
-    public bool existe = false;
 
     protected override async Task OnInitializedAsync()
     {
         Ciudades = await ciudadService.Listar(c => c.CiudadId > 0);
-        Cursos.Fecha = DateTime.Now;
-
         if (CursosId > 0)
         {
             var encontrado = await cursoService.Buscar(CursosId);
@@ -120,49 +114,35 @@
         }
     }
 
-    public async Task Nuevo()
+    private void ActualizarMonto()
     {
-        Cursos = new Cursos();
-
+        Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
+        StateHasChanged();
     }
 
-
-    private void AgregarDetalle()
+    private async Task AgregarDetalle()
     {
         if (CursosDetalles.CiudadId > 0 && CursosDetalles.Monto > 0)
         {
-            var ciudadSeleccionada = Ciudades.FirstOrDefault(c => c.CiudadId == CursosDetalles.CiudadId);
-
-            if (ciudadSeleccionada != null)
-            {
-                double montoTotal = ciudadSeleccionada.MontoBase + CursosDetalles.Monto;
-
-                Cursos.CursosDetalle.Add(new CursosDetalle
-                    {
-                        CiudadId = CursosDetalles.CiudadId,
-                        Monto = montoTotal
-                    });
-
-                Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
-
-                CursosDetalles = new CursosDetalle();
-                DetalleMensaje = string.Empty;
-            }
-            else
-            {
-                DetalleMensaje = "Ciudad no encontrada.";
-            }
+            Cursos.CursosDetalle.Add(new CursosDetalle
+                {
+                    CiudadId = CursosDetalles.CiudadId,
+                    Monto = CursosDetalles.Monto
+                });
+            ActualizarMonto();
+            CursosDetalles = new CursosDetalle();
+            DetalleMensaje = string.Empty;
         }
         else
         {
-            DetalleMensaje = "Debe seleccionar una ciudad y un monto válido.";
+            DetalleMensaje = "Seleccione una ciudad y monto válido.";
         }
     }
 
-    public void EliminarCurso(CursosDetalle detalle)
+    public async Task EliminarCurso(CursosDetalle detalle)
     {
         Cursos.CursosDetalle.Remove(detalle);
-        Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
+        ActualizarMonto();
     }
 
     public async Task Retroceder()
@@ -177,20 +157,21 @@
             DetalleMensaje = "La asignatura es obligatoria.";
             return;
         }
+
         if (!Cursos.CursosDetalle.Any())
         {
-            DetalleMensaje = "Debe agregar al menos un detalle de ciudad.";
+            DetalleMensaje = "Agregue al menos una ciudad.";
             return;
         }
 
-        var guardado = await cursoService.Guardar(Cursos);
-        if (guardado)
+        var resultado = await cursoService.Guardar(Cursos);
+        if (resultado)
         {
-            navigationManager.NavigateTo("Curso/Index");
+            navigationManager.NavigateTo("/Curso/Index");
         }
         else
         {
-            DetalleMensaje = "Error al guardar la encuesta.";
+            DetalleMensaje = "Error al guardar cambios.";
         }
     }
 }
