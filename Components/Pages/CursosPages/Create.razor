@@ -48,7 +48,7 @@
         <div class="row">
             <div class="col-auto input-group align-items-center">
                 <InputSelect class="form-select" @bind-Value="CursosDetalles.CiudadId">
-                    <option disabled value="0">--- Seleccione una Ciudad ---</option>
+                    <option disabled value="0">- Seleccione una Ciudad -</option>
                     @foreach (var ciudad in Ciudades)
                     {
                         <option value="@ciudad.CiudadId">@ciudad.CiudadId -- @ciudad.Nombre</option>
@@ -122,14 +122,12 @@
                 ciudadSeleccionada.MontoBase += CursosDetalles.Monto;
                 await ciudadService.Guardar(ciudadSeleccionada);
 
-                // Agregar detalle con el monto original
                 Cursos.CursosDetalle.Add(new CursosDetalle
                     {
                         CiudadId = CursosDetalles.CiudadId,
                         Monto = CursosDetalles.Monto
                     });
 
-                // Actualizar monto total del curso
                 Cursos.Monto = Cursos.CursosDetalle.Sum(d => d.Monto);
                 CursosDetalles = new CursosDetalle();
                 DetalleMensaje = string.Empty;
